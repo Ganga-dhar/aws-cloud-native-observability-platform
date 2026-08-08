@@ -256,28 +256,28 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: terraform
+        working-directory: terraform/ecr
         run: |
           terraform init
 
       - name: Terraform Format Check
-        working-directory: terraform
+        working-directory: terraform/ecr
         run: |
           terraform fmt -check
 
       - name: Terraform Validate
-        working-directory: terraform
+        working-directory: terraform/ecr
         run: |
           terraform validate
 
       - name: Terraform Plan
-        working-directory: terraform
+        working-directory: terraform/ecr
         run: |
           terraform plan \
             -var="aws_region=${{ vars.AWS_REGION }}"
 
       - name: Terraform Apply
-        working-directory: terraform
+        working-directory: terraform/ecr
         run: |
           terraform apply \
             -auto-approve \
