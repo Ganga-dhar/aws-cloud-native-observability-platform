@@ -9,10 +9,9 @@ on:
   pull_request:
     branches:
       - main
-  
+
   workflow_dispatch:
     inputs:
-
       run_tests:
         description: "Run Unit Tests"
         required: true
@@ -24,7 +23,9 @@ on:
         required: true
         type: boolean
         default: false
-  # ---------------------------------------------------------
+
+
+# ---------------------------------------------------------
 # GitHub OIDC permissions
 # ---------------------------------------------------------
 
@@ -33,16 +34,15 @@ permissions:
   contents: read
 
 
-
 jobs:
+
   # =======================================================
-  # 1. UNIT TESTS
+  # 1. UNIT TESTS - MANUAL ONLY
   # =======================================================
 
   test:
 
     name: Unit Tests
-
     runs-on: ubuntu-latest
 
     if: |
@@ -68,17 +68,21 @@ jobs:
         run: |
           pytest -v
 
+
   # =======================================================
-  # 2. DOCKER BUILD
+  # 2. DOCKER BUILD - AUTOMATIC
   # =======================================================
 
   docker-build:
 
     name: Docker Build
-
     runs-on: ubuntu-latest
 
-    needs: test
+    # IMPORTANT:
+    # No "needs: test"
+    #
+    # Unit tests are manual and must not block
+    # the automatic pipeline.
 
     steps:
 
@@ -94,18 +98,23 @@ jobs:
 
 
   # =======================================================
-  # 3. TRIVY SECURITY SCAN
-  # =======================================================         
+  # 3. TRIVY SECURITY SCAN - MANUAL ONLY
+  # =======================================================
+
   security-scan:
 
     name: Trivy Container Scan
-
     runs-on: ubuntu-latest
+
     if: |
       github.event_name == 'workflow_dispatch' &&
       inputs.run_scan == true
 
-    needs: docker-build
+    # IMPORTANT:
+    # Do NOT use:
+    # needs: docker-build
+    #
+    # Because this is a manually controlled job.
 
     steps:
 
@@ -130,15 +139,16 @@ jobs:
 
 
   # =======================================================
-  # 4. DOCKER TEST
-  # =======================================================       
+  # 4. DOCKER TEST - AUTOMATIC
+  # =======================================================
+
   docker-test:
 
     name: Docker Container Test
-
     runs-on: ubuntu-latest
 
-    needs: docker-build
+    needs:
+      - docker-build
 
     steps:
 
@@ -188,16 +198,20 @@ jobs:
         if: always()
         run: |
           docker stop flask-api
-  
 
 
-
+  # =======================================================
+  # 5. TERRAFORM - CREATE ECR
+  # =======================================================
 
   terraform-ecr:
+
     name: Terraform - Create ECR
 
     runs-on: ubuntu-latest
+
     environment: DEV
+
     needs:
       - docker-test
 
@@ -205,16 +219,35 @@ jobs:
       id-token: write
       contents: read
 
+    # Only create infrastructure from main
+    if: github.ref == 'refs/heads/main'
+
     steps:
 
       - name: Checkout source code
         uses: actions/checkout@v4
+
+      # ---------------------------------------------------
+      # AWS OIDC
+      # ---------------------------------------------------
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
+
+      # ---------------------------------------------------
+      # Verify AWS
+      # ---------------------------------------------------
+
+      - name: Verify AWS identity
+        run: |
+          aws sts get-caller-identity
+
+      # ---------------------------------------------------
+      # Terraform
+      # ---------------------------------------------------
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -246,8 +279,10 @@ jobs:
           terraform apply \
             -auto-approve \
             -var="aws_region=${{ vars.AWS_REGION }}"
+
+
   # =======================================================
-  # 5. PUSH IMAGE TO ECR
+  # 6. PUSH IMAGE TO ECR
   # =======================================================
 
   push-to-ecr:
@@ -255,13 +290,20 @@ jobs:
     name: Push Docker Image to ECR
 
     runs-on: ubuntu-latest
+
     environment: DEV
-    needs:
-      - docker-test
 
     # IMPORTANT:
-    # Only push images from main.
+    # Must wait for Terraform to create ECR.
+    needs:
+      - terraform-ecr
+
+    # Only push from main
     if: github.ref == 'refs/heads/main'
+
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
 
@@ -276,8 +318,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-            role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-            aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
 
       # ---------------------------------------------------
@@ -287,6 +329,17 @@ jobs:
       - name: Verify AWS identity
         run: |
           aws sts get-caller-identity
+
+
+      # ---------------------------------------------------
+      # Verify ECR Repository
+      # ---------------------------------------------------
+
+      - name: Verify ECR repository
+        run: |
+          aws ecr describe-repositories \
+            --repository-names aws-cloud-native-observability-platform \
+            --region ${{ vars.AWS_REGION }}
 
 
       # ---------------------------------------------------
