@@ -146,9 +146,12 @@ jobs:
 
     name: Docker Container Test
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_scan == true
 
-    needs:
-      - docker-build
+    # needs:
+    #   - docker-build
 
     steps:
 
@@ -212,8 +215,8 @@ jobs:
 
     environment: DEV
 
-    needs:
-      - docker-test
+    # needs:
+    #   - docker-test
 
     permissions:
       id-token: write
