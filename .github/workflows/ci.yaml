@@ -59,7 +59,7 @@ jobs:
             -t aws-cloud-native-observability-platform:${{ github.sha }} \
             .
 
-security-scan:
+  security-scan:
 
     name: Trivy Container Scan
 
@@ -87,6 +87,7 @@ security-scan:
           exit-code: '1'
           ignore-unfixed: true
           severity: CRITICAL,HIGH
+
   docker-test:
 
     name: Docker Container Test
