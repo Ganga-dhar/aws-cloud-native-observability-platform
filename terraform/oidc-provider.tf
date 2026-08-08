@@ -4,17 +4,17 @@
 
 //resource "aws_iam_openid_connect_provider" "github" {
 
-  //url = "https://token.actions.githubusercontent.com"
+//url = "https://token.actions.githubusercontent.com"
 
-  //client_id_list = [
-    //"sts.amazonaws.com"
-  //]
+//client_id_list = [
+//"sts.amazonaws.com"
+//]
 
-  //tags = {
-    //Name        = "github-actions-oidc"
-    //Project     = "aws-cloud-native-observability-platform"
-    //ManagedBy   = "Terraform"
-  //}
+//tags = {
+//Name        = "github-actions-oidc"
+//Project     = "aws-cloud-native-observability-platform"
+//ManagedBy   = "Terraform"
+//}
 //}
 
 
@@ -24,44 +24,44 @@
 
 //data "aws_iam_policy_document" "github_actions_assume_role" {
 
-  //statement {
+//statement {
 
-   // effect = "Allow"
+// effect = "Allow"
 
-    //principals {
-      //type = "Federated"
+//principals {
+//type = "Federated"
 
-      //identifiers = [
-        //aws_iam_openid_connect_provider.github.arn
-      //]
-    //}
+//identifiers = [
+//aws_iam_openid_connect_provider.github.arn
+//]
+//}
 
-    //actions = [
-      //"sts:AssumeRoleWithWebIdentity"
-    //]
+//actions = [
+//"sts:AssumeRoleWithWebIdentity"
+//]
 
-    //condition {
+//condition {
 
-      //test = "StringEquals"
+//test = "StringEquals"
 
-      //variable = "token.actions.githubusercontent.com:aud"
+//variable = "token.actions.githubusercontent.com:aud"
 
-      //values = [
-        //"sts.amazonaws.com"
-      //]
-    //}
+//values = [
+//"sts.amazonaws.com"
+//]
+//}
 
-    //condition {
+//condition {
 
-      //test = "StringEquals"
+//test = "StringEquals"
 
-      //variable = "token.actions.githubusercontent.com:sub"
+//variable = "token.actions.githubusercontent.com:sub"
 
-      //values = [
-       // "repo:${var.github_repository}:ref:refs/heads/${var.github_branch}"
-      //]
-    //}
-  //}
+//values = [
+// "repo:${var.github_repository}:ref:refs/heads/${var.github_branch}"
+//]
+//}
+//}
 //}
 
 
@@ -71,13 +71,13 @@
 
 //resource "aws_iam_role" "github_actions" {
 
-  //name = var.github_actions_role_name
+//name = var.github_actions_role_name
 
-  //assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
+//assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
 
-  //tags = {
-    //Name      = var.github_actions_role_name
-    //Project   = "aws-cloud-native-observability-platform"
-    //ManagedBy = "Terraform"
-  //}
+//tags = {
+//Name      = var.github_actions_role_name
+//Project   = "aws-cloud-native-observability-platform"
+//ManagedBy = "Terraform"
+//}
 //}

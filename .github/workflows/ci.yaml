@@ -9,7 +9,21 @@ on:
   pull_request:
     branches:
       - main
+  
+  workflow_dispatch:
+    inputs:
 
+      run_tests:
+        description: "Run Unit Tests"
+        required: true
+        type: boolean
+        default: false
+
+      run_scan:
+        description: "Run Trivy Security Scan"
+        required: true
+        type: boolean
+        default: false
   # ---------------------------------------------------------
 # GitHub OIDC permissions
 # ---------------------------------------------------------
@@ -30,6 +44,10 @@ jobs:
     name: Unit Tests
 
     runs-on: ubuntu-latest
+
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_tests == true
 
     steps:
 
@@ -83,6 +101,9 @@ jobs:
     name: Trivy Container Scan
 
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_scan == true
 
     needs: docker-build
 
