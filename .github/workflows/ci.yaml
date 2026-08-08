@@ -176,7 +176,7 @@ jobs:
     name: Terraform - Create ECR
 
     runs-on: ubuntu-latest
-
+    environment: DEV
     needs:
       - docker-test
 
