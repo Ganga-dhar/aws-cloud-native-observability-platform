@@ -5,12 +5,12 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY app/requirements.txt .
+COPY app/requirements.txt /app/requirements.txt
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-COPY app/app.py .
+COPY app/app.py /app/app.py
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["python", "/app/app.py"]
