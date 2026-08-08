@@ -177,7 +177,7 @@ jobs:
     name: Push Docker Image to ECR
 
     runs-on: ubuntu-latest
-
+    environment: DEV
     needs:
       - docker-test
 
